@@ -6,19 +6,6 @@ import (
 	"regexp"
 )
 
-func handleRoomsGet(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		handleGetAllRooms(w, r)
-	case http.MethodPost:
-		handleCreateRoom(w, r)
-	case http.MethodPatch:
-		handleUpdateOffers(w, r)
-	default:
-		http.Error(w, "not allowed", http.StatusMethodNotAllowed)
-	}
-}
-
 func handleGetAllRooms(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	response := DatabaseGetAllRooms()
@@ -29,7 +16,7 @@ func handleGetAllRooms(w http.ResponseWriter, r *http.Request) {
 
 var isValidName = regexp.MustCompile(`^[a-zA-Z]+$`).MatchString
 
-func handleCreateRoom(w http.ResponseWriter, r *http.Request) {
+func handleRoomsCreate(w http.ResponseWriter, r *http.Request) {
 	RoomName := r.URL.Query().Get("roomId")
 	RoomPassword := r.URL.Query().Get("roomPassword")
 	Private := r.URL.Query().Has("private")
@@ -49,6 +36,28 @@ func handleCreateRoom(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func handleUpdateAnswers(w http.ResponseWriter, r *http.Request) {
+	payload := ClientProfile{}
+	Password := r.URL.Query().Get("password")
+	RoomName := r.URL.Query().Get("roomId")
+	if Password == "" {
+		http.Error(w, "secret was not provided", http.StatusForbidden)
+		return
+	}
+	if RoomName == "" {
+		http.Error(w, "roomId was not provided", http.StatusForbidden)
+		return
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := DatabaseUpdateIceCandidateAnswers(RoomName, Password, payload); err != nil {
+		http.Error(w, err.Error(), http.StatusForbidden)
+		return
+	}
+	defer r.Body.Close()
+}
 func handleUpdateOffers(w http.ResponseWriter, r *http.Request) {
 	payload := ClientProfile{}
 	Secret := r.URL.Query().Get("secret")
