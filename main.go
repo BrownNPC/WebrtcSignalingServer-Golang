@@ -6,11 +6,21 @@ import (
 )
 
 func main() {
-	http.HandleFunc("GET /rooms", handleGetAllRooms)
-	http.HandleFunc("POST /create", handleRoomsCreate)
-	http.HandleFunc("PATCH /offer", handleUpdateOffers)
-	http.HandleFunc("PATCH /answer", handleUpdateAnswers)
-	log.Println("server is up on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	roomStore := NewRoomStore()
+	mux := http.NewServeMux()
+	// GET
+	mux.HandleFunc("GET /get-rooms", roomStore.GetAllRoomsHandler)
+	mux.HandleFunc("GET /get-rooms-scary", roomStore.GetAllRoomsScaryHandler)
+	mux.HandleFunc("POST /get-peers", roomStore.GetPeersHandler)
+	// post on purpose cuz we need to pass some shit
+	mux.HandleFunc("POST /get-answer", roomStore.GetAnswersHandler)
 
+	// POST
+	mux.HandleFunc("POST /create-room", roomStore.CreateRoomHandler)
+	mux.HandleFunc("POST /set-answer", roomStore.SetAnswerHandler)
+
+	mux.HandleFunc("POST /add-peer", roomStore.AddPeerHandler)
+
+	// Start the HTTP server
+	log.Fatal(http.ListenAndServe(":8080", corsMiddleware(mux)))
 }
