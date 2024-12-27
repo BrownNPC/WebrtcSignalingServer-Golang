@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -22,5 +23,6 @@ func main() {
 	mux.HandleFunc("POST /add-peer", roomStore.AddPeerHandler)
 
 	// Start the HTTP server
+	fmt.Println("starting server on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", corsMiddleware(mux)))
 }
